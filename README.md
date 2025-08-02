@@ -52,3 +52,7 @@ Check each layer to identify where the problem lies, in this case I had an AWS L
 ### Lessons
 - I found it necessary to include the `Origin` and `Access-Control-Request-Method` to get the AWS Gateway to return the headers
 - I had to enable Cors on the API Gateway with '*' for each header value except for `Access-Control-Allow-Methods` which only seemed to work if I explicitly select all the methods
+
+## Python Requirements
+A useful command to capture versions of packages when you have not specified version in the requirements.txt:
+`pip freeze -q -r requirements.txt | sed '/freeze/,$ d'`
