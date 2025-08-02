@@ -3,6 +3,13 @@
 
 A place to collect my knowledge journey writing code and developing applications
 
+- [Python Mocks](#python-mocks)
+- [SSH Agent Forwarding](#ssh-agent-forwarding)
+- [Handling Cors](#handling-cors)
+  * [Checks](#checks)
+  * [Lessons](#lessons)
+- [Python Requirements](#python-requirements)
+
 ## Python Mocks
 When attempting to `@patch` using unittest mocks to define the target for a chain of calls that may also occur across multiple lines e.g.
 ```
