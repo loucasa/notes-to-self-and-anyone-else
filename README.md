@@ -9,6 +9,7 @@ A place to collect my knowledge journey writing code and developing applications
   * [Checks](#checks)
   * [Lessons](#lessons)
 - [Python Requirements](#python-requirements)
+- [Lambda API Versioning](#aws-api-gateway-stage-lambda-proxy-versioning)
 
 ## Python Mocks
 When attempting to `@patch` using unittest mocks to define the target for a chain of calls that may also occur across multiple lines e.g.
@@ -63,3 +64,51 @@ Check each layer to identify where the problem lies, in this case I had an AWS L
 ## Python Requirements
 A useful command to capture versions of packages when you have not specified version in the requirements.txt:
 `pip freeze -q -r requirements.txt | sed '/freeze/,$ d'`
+
+## AWS API Gateway Stage Lambda Proxy Versioning
+There seems to be a few guides covering this (like [this aws blog](https://aws.amazon.com/blogs/compute/using-api-gateway-stage-variables-to-manage-lambda-functions/)) but I wanted to document the steps here just because it tripped me up when I missed some of the important details. I have a single lambda that is executed via a HTTP API gateway and I wanted to setup independent dev and prod environments so that I can make changes and test them in dev before releasing to prod, here are the steps:
+
+1. Create 2 Lambda aliases (these names will be the value of stage variables used later):
+   * dev: Pointing to the $LATEST version.
+   * prod: Pointing to a specific, stable version (you can use the current latest version for now).
+1. Configure the API Gateway integration on the route:
+   * Integration type: `Lambda function`
+   * Integration target:
+     * select the lambda from the list to get the arn populated if you don't know it
+     * change the value of `Lambda function` to the following (replacing `arn_of_the_lambda`): `arn_of_the_lambda:${stageVariables.lambdaAlias}`
+     * after saving take note of the `source-arn` in the `Example policy statement` in the integration details (it will be used in the lambda permission)
+1. Configure 2 API Gateway stages:
+   * dev: with stage variable `lambdaAlias=dev`
+   * prod: with stage variable `lambdaAlias=prod`
+1. Configure permissions on each lambda alias, you should not need any permissions set on the main funtion, only the aliases
+   * Select `AWS Service`
+   * Set `Service` to `API Gateway`
+   * Set `Statement ID` to anything unique
+   * Leave `Principle` as it is
+   * Set `Source ARN` to value noted earlier when setting up the gateway integration
+     * it should have the following format: "arn:aws:execute-api:`aws_region`:`aws_account`:`api_id`/\*/\*/`api_route`"
+     * you can decide how strict to make the trailing path, it defines the `/stage/method/resource` elements so `/dev/*/my-api`, allows any method only on the dev stage on the my-api resource
+   * Set `Action` to `lambda:InvokeFunction`
+   *  Watch out for 500 status codes from the gateways when the permssions are incorrect. Example policy generated:
+```json
+{
+  "Version": "2012-10-17",
+  "Id": "default",
+  "Statement": [
+    {
+      "Sid": "my_api-lambda-alias-policy",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "apigateway.amazonaws.com"
+      },
+      "Action": "lambda:InvokeFunction",
+      "Resource": "arn:aws:lambda:us-east-1:123456789999:function:my-lambda-function:dev",
+      "Condition": {
+        "ArnLike": {
+          "AWS:SourceArn": "arn:aws:execute-api:us-east-1:123456789999:1abcde1a2b/*/*/my-api"
+        }
+      }
+    }
+  ]
+}
+```
