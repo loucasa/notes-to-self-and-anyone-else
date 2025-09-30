@@ -7,6 +7,7 @@ A place to collect my knowledge journey writing code and developing applications
 - [SSH Agent Forwarding](#ssh-agent-forwarding)
 - [Handling Cors](#handling-cors)
   * [Checks](#checks)
+  * [Testing](#testing)
   * [Lessons](#lessons)
 - [Python Requirements](#python-requirements)
 - [Lambda API Versioning](#aws-api-gateway-stage-lambda-proxy-versioning)
@@ -53,10 +54,13 @@ Check each layer to identify where the problem lies, in this case I had an AWS L
   ```
 - Invoking the API Gateway to ensure the API endpoint responds with all headers to OPTIONS requests and at least with `Access-Control-Allow-Origin` to the the actual API request and with a 200 HTTP response status code.
 
-    - Curl allows you to quckly check if headers are present as a good first step but does not fully similate a browser where preflight check is involved and also the origin header set by the browser:
-
-       `curl -i -X OPTIONS -H "Origin: http://foo.com" -H 'Access-Control-Request-Method: GET' https://my.api/path`
-    - Online tools like this [cors-tester](https://cors-error.dev/cors-tester/) really helped too
+### Testing
+- Curl allows you to quckly check if headers are present as a good first step but does not fully similate a browser where preflight check is involved and also the origin header set by the browser:
+`curl -i -X OPTIONS -H "Origin: http://foo.com" -H 'Access-Control-Request-Method: GET' https://my.api/path`
+- Online tools like this [cors-tester](https://cors-error.dev/cors-tester/) really helped too
+- A useful command to start a python local file system web server for testing:
+`python -m http.server`
+ 
 ### Lessons
 - I found it necessary to include the `Origin` and `Access-Control-Request-Method` to get the AWS Gateway to return the headers
 - I had to enable Cors on the API Gateway with '*' for each header value except for `Access-Control-Allow-Methods` which only seemed to work if I explicitly select all the methods
